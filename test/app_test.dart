@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sdp/app/theme/app_theme.dart';
-import 'package:sdp/core/widgets/core_widgets.dart';
-import 'package:sdp/core/models/app_models.dart';
+import 'package:job_sequencing_app/app/theme/app_theme.dart';
+import 'package:job_sequencing_app/core/widgets/core_widgets.dart';
+import 'package:job_sequencing_app/core/models/app_models.dart';
 
 void main() {
   group('Theme & Core Widgets Tests', () {

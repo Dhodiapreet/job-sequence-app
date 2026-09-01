@@ -1,9 +1,54 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/mock_data/mock_data.dart';
+import '../../../core/models/app_models.dart';
 
-class WorkerRequestsScreen extends StatelessWidget {
+class WorkerRequestsScreen extends StatefulWidget {
   const WorkerRequestsScreen({super.key});
+
+  @override
+  State<WorkerRequestsScreen> createState() => _WorkerRequestsScreenState();
+}
+
+class _WorkerRequestsScreenState extends State<WorkerRequestsScreen> {
+  // Local state to track the status of requests (pending, accepted, declined)
+  final Map<String, String> _requestStatuses = {};
+
+  void _handleRequestAction(JobRequest req, bool isAccept) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isAccept ? 'Accept Job Request?' : 'Decline Job Request?'),
+        content: Text(isAccept 
+            ? 'Are you sure you want to accept the request for ${req.serviceTitle} from ${req.customerName}? This will be added to your schedule.'
+            : 'Are you sure you want to decline this request? The customer will be notified to find another worker.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx), // Cancel makes no changes
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _requestStatuses[req.id] = isAccept ? 'accepted' : 'declined';
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(isAccept ? 'Request accepted! Added to schedule.' : 'Request declined.'),
+                  backgroundColor: isAccept ? AppColors.workerBrand : AppColors.error,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isAccept ? AppColors.workerBrand : AppColors.error,
+            ),
+            child: Text(isAccept ? 'Accept' : 'Decline'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +63,8 @@ class WorkerRequestsScreen extends StatelessWidget {
               itemCount: MockData.sampleJobRequests.length,
               itemBuilder: (context, index) {
                 final req = MockData.sampleJobRequests[index];
+                final status = _requestStatuses[req.id] ?? 'pending';
+                
                 return Card(
                   margin: const EdgeInsets.only(bottom: 16),
                   elevation: 0,
@@ -33,7 +80,7 @@ class WorkerRequestsScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(req.serviceTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            Expanded(child: Text(req.serviceTitle, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
                             Text('\$${req.estimatedEarnings.toStringAsFixed(0)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.workerBrand)),
                           ],
                         ),
@@ -58,38 +105,65 @@ class WorkerRequestsScreen extends StatelessWidget {
                           children: [
                             const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
                             const SizedBox(width: 8),
-                            Text('${req.location} (${req.distanceKm} km away)', style: const TextStyle(color: AppColors.textSecondary)),
+                            Expanded(child: Text('${req.location} (${req.distanceKm} km away)', style: const TextStyle(color: AppColors.textSecondary))),
                           ],
                         ),
                         const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request declined')));
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: AppColors.error),
-                                  foregroundColor: AppColors.error,
+                        
+                        if (status == 'pending')
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () => _handleRequestAction(req, false),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: AppColors.error),
+                                    foregroundColor: AppColors.error,
+                                  ),
+                                  child: const Text('Decline'),
                                 ),
-                                child: const Text('Decline'),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request accepted! Added to schedule.')));
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.workerBrand,
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () => _handleRequestAction(req, true),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.workerBrand,
+                                  ),
+                                  child: const Text('Accept'),
                                 ),
-                                child: const Text('Accept'),
                               ),
+                            ],
+                          )
+                        else
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: status == 'accepted' 
+                                  ? AppColors.workerBrand.withValues(alpha: 0.1)
+                                  : AppColors.error.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          ],
-                        )
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  status == 'accepted' ? Icons.check_circle : Icons.cancel,
+                                  color: status == 'accepted' ? AppColors.workerBrand : AppColors.error,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  status == 'accepted' ? 'Request Accepted' : 'Request Declined',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: status == 'accepted' ? AppColors.workerBrand : AppColors.error,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),

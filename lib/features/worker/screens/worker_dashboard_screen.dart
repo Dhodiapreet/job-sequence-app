@@ -4,6 +4,8 @@ import '../../../core/mock_data/mock_data.dart';
 import '../../../core/models/app_models.dart';
 import 'worker_execution_screen.dart';
 
+import 'worker_notifications_screen.dart';
+
 class WorkerDashboardScreen extends StatelessWidget {
   const WorkerDashboardScreen({super.key});
 
@@ -16,7 +18,7 @@ class WorkerDashboardScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notifications opened')));
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkerNotificationsScreen()));
             },
           )
         ],

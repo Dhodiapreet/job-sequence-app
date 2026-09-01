@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/models/app_models.dart';
 
@@ -18,7 +18,7 @@ class CustomerBookingDetailsScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
-            onPressed: () {},
+            onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); },
           ),
         ],
       ),

@@ -24,7 +24,7 @@ class AdminCustomersScreen extends StatelessWidget {
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.search_rounded), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search_rounded), onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); }),
         ],
       ),
       body: Column(
@@ -133,8 +133,13 @@ class AdminCustomersScreen extends StatelessWidget {
                       ),
                       PopupMenuButton<String>(
                         onSelected: (val) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('$val: ${c.name}')),
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(val == 'view' ? 'View Profile' : 'Contact Customer'),
+                              content: Text(val == 'view' ? 'Display full profile details for ${c.name} here.' : 'Open messaging interface for ${c.name}.'),
+                              actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],
+                            ),
                           );
                         },
                         itemBuilder: (_) => [

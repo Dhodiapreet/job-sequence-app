@@ -28,7 +28,7 @@ class _AdminWorkersScreenState extends State<AdminWorkersScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.search_rounded),
-            onPressed: () {},
+            onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); },
           ),
           IconButton(
             icon: const Icon(Icons.filter_list_rounded),
@@ -70,7 +70,7 @@ class _AdminWorkersScreenState extends State<AdminWorkersScreen> {
                         fontWeight: FontWeight.w500)),
                 const Spacer(),
                 TextButton.icon(
-                  onPressed: () {},
+                  onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); },
                   icon: const Icon(Icons.download_rounded, size: 16),
                   label: const Text('Export', style: TextStyle(fontSize: 12)),
                 ),

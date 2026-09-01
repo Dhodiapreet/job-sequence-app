@@ -18,7 +18,7 @@ class AdminCategoriesScreen extends StatelessWidget {
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.search_rounded), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search_rounded), onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); }),
         ],
       ),
       body: ListView(

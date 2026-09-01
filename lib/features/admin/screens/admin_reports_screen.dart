@@ -47,7 +47,7 @@ class AdminReportsScreen extends StatelessWidget {
                           fontSize: 14, fontWeight: FontWeight.w600)),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); },
                   child: const Text('Change',
                       style: TextStyle(fontSize: 12)),
                 ),

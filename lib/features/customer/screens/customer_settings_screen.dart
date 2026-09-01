@@ -112,13 +112,13 @@ class _CustomerSettingsScreenState extends State<CustomerSettingsScreen> {
                 ListTile(
                   title: const Text("Privacy & Data Permissions", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                   trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textTertiary),
-                  onTap: () {},
+                  onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Preference selected"))); },
                 ),
                 const Divider(height: 1),
                 ListTile(
                   title: const Text("Terms of Service & Guarantee", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                   trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textTertiary),
-                  onTap: () {},
+                  onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Preference selected"))); },
                 ),
               ],
             ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/mock_data/mock_data.dart';
+import 'admin_verification_screen.dart';
+import 'admin_reports_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -29,7 +31,7 @@ class AdminDashboardScreen extends StatelessWidget {
               smallSize: 8,
               child: Icon(Icons.notifications_outlined),
             ),
-            onPressed: () {},
+            onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); },
           ),
         ],
       ),
@@ -241,10 +243,32 @@ class AdminDashboardScreen extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: [
-              _actionChip(context, Icons.person_add_rounded, 'Add Worker'),
-              _actionChip(context, Icons.verified_rounded, 'Verify Worker'),
-              _actionChip(context, Icons.receipt_long_rounded, 'View Reports'),
-              _actionChip(context, Icons.support_agent_rounded, 'Support'),
+              _actionChip(context, Icons.person_add_rounded, 'Add Worker', () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Add Worker'),
+                    content: const Text('Worker invite system will open here.'),
+                    actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+                  ),
+                );
+              }),
+              _actionChip(context, Icons.verified_rounded, 'Verify Worker', () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminVerificationScreen()));
+              }),
+              _actionChip(context, Icons.receipt_long_rounded, 'View Reports', () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminReportsScreen()));
+              }),
+              _actionChip(context, Icons.support_agent_rounded, 'Support', () {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Support'),
+                    content: const Text('Help desk interface will open here.'),
+                    actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+                  ),
+                );
+              }),
             ],
           ),
           const SizedBox(height: 32),
@@ -392,14 +416,11 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _actionChip(BuildContext context, IconData icon, String label) {
+  Widget _actionChip(BuildContext context, IconData icon, String label, VoidCallback onTap) {
     return ActionChip(
       avatar: Icon(icon, size: 16, color: AppColors.adminBrand),
       label: Text(label, style: const TextStyle(fontSize: 12)),
-      onPressed: () {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$label tapped')));
-      },
+      onPressed: onTap,
       backgroundColor: AppColors.surface,
       side: const BorderSide(color: AppColors.border),
     );

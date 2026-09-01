@@ -38,7 +38,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
         actions: [
-          IconButton(icon: const Icon(Icons.search_rounded), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.search_rounded), onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); }),
         ],
       ),
       body: Column(
@@ -68,7 +68,7 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
                     style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                 const Spacer(),
                 TextButton.icon(
-                  onPressed: () {},
+                  onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); },
                   icon: const Icon(Icons.sort_rounded, size: 16),
                   label: const Text('Sort', style: TextStyle(fontSize: 12)),
                 ),
@@ -169,8 +169,31 @@ class _AdminJobsScreenState extends State<AdminJobsScreen> {
             children: [
               TextButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Viewing details for ${job.id}')),
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+                    builder: (ctx) => Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Job Details: ${job.id}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+                          Text('Category: ${job.service}', style: const TextStyle(fontSize: 14)),
+                          Text('Location: ${job.location}', style: const TextStyle(fontSize: 14)),
+                          Text('Date: ${job.date} - ${job.time}', style: const TextStyle(fontSize: 14)),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text('Close'),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
                   );
                 },
                 child: const Text('View Details',

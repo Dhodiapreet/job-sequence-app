@@ -33,7 +33,24 @@ class WorkerEarningsScreen extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Initiating payout...')));
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Confirm Withdrawal'),
+                          content: const Text('Withdraw \$450.00 to your linked bank account ending in 4242?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.workerBrand),
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Withdrawal initiated successfully!')));
+                              },
+                              child: const Text('Confirm'),
+                            ),
+                          ],
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,

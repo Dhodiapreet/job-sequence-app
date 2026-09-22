@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 # 🛠️ Job Sequence App
 
@@ -9,7 +9,7 @@
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/Dhodiapreet/job-sequence-app)
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter)](https://flutter.dev/)
 [![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart)](https://dart.dev/)
-[![Status](https://img.shields.io/badge/Status-UI%20Prototype-22C55E?style=for-the-badge)](#-current-project-status)
+[![Status](https://img.shields.io/badge/Status-Supabase%20Integration-22C55E?style=for-the-badge)](#-current-project-status)
 
 </div>
 
@@ -23,7 +23,7 @@
 *   👷 **Job Seeker / Worker** — Receive job requests, manage schedules, and execute assigned jobs.
 *   🛡️ **Admin** — Manage customers, workers, jobs, bookings, verification, and reports.
 
-> **Note:** The current milestone focuses entirely on a polished, interactive **UI prototype** with realistic mock data and complete navigation flows. Backend, real authentication, database persistence, and payment processing are intentionally deferred to future phases.
+> **Note:** We are currently in Phase 2: Integrating Supabase (PostgreSQL + Auth) into our completed UI Prototype.
 
 ---
 
@@ -310,3 +310,18 @@ This project is currently intended as an educational and structural prototype pr
   <p><i>Built with Flutter • Designed for real-world job sequencing</i></p>
   <p>⭐ If you find this project useful, consider starring the repository!</p>
 </div>
+
+## 🚀 Progress Update (Phase 2A - Supabase Foundation)
+
+We have successfully completed the foundational setup for our remote Supabase Database! 
+
+* **Supabase Client Configured**: The Flutter app is successfully linked to the remote Supabase project.
+* **PostgreSQL Schema Defined**: Generated robust SQL migrations defining profiles, ookings, worker_availability, and job_sequence_items.
+* **Row-Level Security (RLS)**: Enforced strict zero-trust security policies allowing Customers, Workers, and Admins to only access their respective data.
+* **State Machine Triggers**: Added PostgreSQL-native functions (alidate_booking_status_transition) to prevent unauthorized booking updates.
+* **Double Booking Prevention**: Enforced time-based EXCLUDE USING gist constraints on the worker schedules, smartly allowing cancelled slots to be reused.
+
+**Next Steps (Phase 2B & 2C):**
+* Apply the SQL migrations to the live Supabase project.
+* Replace mock authentication with Supabase.instance.client.auth.
+* Bind the interactive UI Dashboards directly to the Supabase data models.

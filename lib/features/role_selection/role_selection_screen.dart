@@ -1,8 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../app/theme/app_theme.dart';
-import '../customer/screens/customer_main_screen.dart';
-import '../worker/screens/worker_main_screen.dart';
-import '../admin/screens/admin_main_screen.dart';
+import '../auth/screens/login_screen.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
   const RoleSelectionScreen({super.key});
@@ -59,7 +57,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const CustomerMainScreen()),
+                        MaterialPageRoute(builder: (_) => const LoginScreen(targetRole: 'CUSTOMER')),
                       );
                     },
                   ),
@@ -76,7 +74,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const WorkerMainScreen()),
+                        MaterialPageRoute(builder: (_) => const LoginScreen(targetRole: 'WORKER')),
                       );
                     },
                   ),
@@ -93,7 +91,7 @@ class RoleSelectionScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const AdminMainScreen()),
+                        MaterialPageRoute(builder: (_) => const LoginScreen(targetRole: 'ADMIN')),
                       );
                     },
                   ),

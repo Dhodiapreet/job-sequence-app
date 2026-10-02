@@ -1,13 +1,39 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
-import '../../../core/mock_data/mock_data.dart';
 
-class AdminCategoriesScreen extends StatelessWidget {
+import '../../../core/services/worker_service.dart';
+import '../../../core/models/app_models.dart';
+
+class AdminCategoriesScreen extends StatefulWidget {
   const AdminCategoriesScreen({super.key});
 
   @override
+  State<AdminCategoriesScreen> createState() => _AdminCategoriesScreenState();
+}
+
+class _AdminCategoriesScreenState extends State<AdminCategoriesScreen> {
+  List<ServiceCategory> categories = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final cats = await WorkerService.getCategories();
+    if (mounted) {
+      setState(() {
+        categories = cats;
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final categories = MockData.categories;
+    if (isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
     return Scaffold(
       appBar: AppBar(
@@ -154,3 +180,4 @@ class AdminCategoriesScreen extends StatelessWidget {
     );
   }
 }
+

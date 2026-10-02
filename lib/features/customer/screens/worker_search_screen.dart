@@ -2,6 +2,7 @@
 import '../../../app/theme/app_theme.dart';
 import '../../../core/mock_data/mock_data.dart';
 import '../../../core/models/app_models.dart';
+import '../../../core/services/worker_service.dart';
 import '../../../core/widgets/worker_card.dart';
 import 'worker_profile_screen.dart';
 
@@ -15,6 +16,24 @@ class WorkerSearchScreen extends StatefulWidget {
 class _WorkerSearchScreenState extends State<WorkerSearchScreen> {
   final TextEditingController _controller = TextEditingController();
   String _query = "";
+  List<WorkerProfile> _allWorkers = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final workers = await WorkerService.getWorkers();
+    if (mounted) {
+      setState(() {
+        _allWorkers = workers;
+        isLoading = false;
+      });
+    }
+  }
 
   final List<String> _popularSearches = [
     "Master Plumber",
@@ -36,7 +55,7 @@ class _WorkerSearchScreenState extends State<WorkerSearchScreen> {
   Widget build(BuildContext context) {
     final searchResults = _query.isEmpty
         ? <WorkerProfile>[]
-        : MockData.sampleWorkers.where((w) {
+        : _allWorkers.where((w) {
             final q = _query.toLowerCase();
             return w.name.toLowerCase().contains(q) ||
                 w.trade.toLowerCase().contains(q) ||
@@ -170,3 +189,4 @@ class _WorkerSearchScreenState extends State<WorkerSearchScreen> {
     );
   }
 }
+

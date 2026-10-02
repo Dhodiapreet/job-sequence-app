@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/services/auth_service.dart';
 
 class CustomerProfileScreen extends StatelessWidget {
   const CustomerProfileScreen({super.key});
@@ -136,11 +137,22 @@ class CustomerProfileScreen extends StatelessWidget {
             onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Section opened"))); },
           ),
           _buildMenuTile(
-            icon: Icons.swap_horiz_rounded,
-            title: "Switch Portal / Role",
-            subtitle: "Return to role selection",
+            icon: Icons.logout_rounded,
+            title: "Sign Out",
+            subtitle: "Log out of your account",
             iconColor: AppColors.primary,
-            onTap: () => Navigator.pop(context),
+            onTap: () async {
+              try {
+                await AuthService.signOut();
+                if (!context.mounted) return;
+                Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+                );
+              }
+            },
           ),
           const SizedBox(height: 24),
         ],
@@ -192,3 +204,5 @@ class CustomerProfileScreen extends StatelessWidget {
     );
   }
 }
+
+

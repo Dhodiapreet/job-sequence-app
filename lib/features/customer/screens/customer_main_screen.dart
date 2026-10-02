@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/mock_data/mock_data.dart';
 import '../../../core/models/app_models.dart';
+import '../../../core/services/worker_service.dart';
 import '../../../core/widgets/worker_card.dart';
 import 'customer_sequence_view.dart';
 import 'worker_search_screen.dart';
@@ -75,14 +76,44 @@ class _CustomerMainScreenState extends State<CustomerMainScreen> {
 }
 
 // ---------------- TAB 1: RICH HOME DASHBOARD ----------------
-class _CustomerHomeDashboardTab extends StatelessWidget {
+class _CustomerHomeDashboardTab extends StatefulWidget {
   const _CustomerHomeDashboardTab();
 
   @override
+  State<_CustomerHomeDashboardTab> createState() => _CustomerHomeDashboardTabState();
+}
+
+class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
+  List<ServiceCategory> categories = [];
+  List<WorkerProfile> nearbyWorkers = [];
+  List<WorkerProfile> availableToday = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final cats = await WorkerService.getCategories();
+    final workers = await WorkerService.getWorkers();
+    if (mounted) {
+      setState(() {
+        categories = cats;
+        nearbyWorkers = workers;
+        availableToday = workers.where((w) => w.isAvailableToday).toList();
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     final upcomingBooking = MockData.sampleBookings.firstWhere((b) => b.status == JobStatus.booked);
-    final nearbyWorkers = MockData.sampleWorkers;
-    final availableToday = MockData.sampleWorkers.where((w) => w.isAvailableToday).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -97,7 +128,7 @@ class _CustomerHomeDashboardTab extends StatelessWidget {
             const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Hello, David 👋", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text("Hello, David ðŸ‘‹", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Text("742 Evergreen Terrace", style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
               ],
             ),
@@ -256,7 +287,7 @@ class _CustomerHomeDashboardTab extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "${upcomingBooking.worker.name} • ${upcomingBooking.timeSlot}",
+                        "${upcomingBooking.worker.name} â€¢ ${upcomingBooking.timeSlot}",
                         style: const TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
@@ -388,9 +419,9 @@ class _CustomerHomeDashboardTab extends StatelessWidget {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: MockData.categories.length,
+              itemCount: categories.length,
               itemBuilder: (context, index) {
-                final cat = MockData.categories[index];
+                final cat = categories[index];
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: InkWell(
@@ -673,3 +704,4 @@ class _CustomerEscrowWalletTab extends StatelessWidget {
     );
   }
 }
+

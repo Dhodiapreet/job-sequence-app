@@ -1,14 +1,74 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/mock_data/mock_data.dart';
+import '../../../core/services/worker_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/models/app_models.dart';
 import 'worker_execution_screen.dart';
 
-class WorkerScheduleScreen extends StatelessWidget {
+class WorkerScheduleScreen extends StatefulWidget {
   const WorkerScheduleScreen({super.key});
 
   @override
+  State<WorkerScheduleScreen> createState() => _WorkerScheduleScreenState();
+}
+
+class _WorkerScheduleScreenState extends State<WorkerScheduleScreen> {
+  final DateTime _selectedDate = DateTime.now();
+  List<TimeSlot> _slots = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSchedule();
+  }
+
+  Future<void> _loadSchedule() async {
+    setState(() => _isLoading = true);
+    final uid = Supabase.instance.client.auth.currentUser!.id;
+    final slots = await WorkerService.getWorkerAvailability(uid, _selectedDate);
+    if (mounted) {
+      setState(() {
+        _slots = slots;
+        _isLoading = false;
+      });
+    }
+  }
+
+  
+  Future<void> _createSlot() async {
+    final TimeOfDay? start = await showTimePicker(context: context, initialTime: const TimeOfDay(hour: 8, minute: 0));
+    if (start == null) return;
+    
+    if (!mounted) return;
+    final TimeOfDay? end = await showTimePicker(context: context, initialTime: const TimeOfDay(hour: 12, minute: 0));
+    if (end == null) return;
+
+    if (start.hour > end.hour || (start.hour == end.hour && start.minute >= end.minute)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Start time must be before end time')));
+      return;
+    }
+
+    final sTime = "${start.hour.toString().padLeft(2, '0')}:${start.minute.toString().padLeft(2, '0')}:00";
+    final eTime = "${end.hour.toString().padLeft(2, '0')}:${end.minute.toString().padLeft(2, '0')}:00";
+
+    final uid = Supabase.instance.client.auth.currentUser!.id;
+    try {
+      await WorkerService.createAvailability(uid, _selectedDate, sTime, eTime);
+      _loadSchedule();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Availability added')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Schedule', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -21,11 +81,20 @@ class WorkerScheduleScreen extends StatelessWidget {
           )
         ],
       ),
-      body: ListView.builder(
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: _createSlot,
+        backgroundColor: AppColors.workerBrand,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+
+      body: _slots.isEmpty ? const Center(child: Text("No availability for this date.", style: TextStyle(color: AppColors.textSecondary))) : ListView.builder(
+
+
         padding: const EdgeInsets.all(16),
-        itemCount: MockData.sampleSchedule.length,
+        itemCount: _slots.length,
         itemBuilder: (context, index) {
-          final slot = MockData.sampleSchedule[index];
+          final slot = _slots[index];
           final isBreak = slot.status == SlotStatus.breakTime;
           final isAvailable = slot.status == SlotStatus.available;
           

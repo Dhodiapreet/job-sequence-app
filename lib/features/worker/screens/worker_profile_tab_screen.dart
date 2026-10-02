@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
-import '../../role_selection/role_selection_screen.dart';
+import '../../../core/services/auth_service.dart';
 
 class WorkerProfileTabScreen extends StatelessWidget {
   const WorkerProfileTabScreen({super.key});
@@ -46,14 +46,10 @@ class WorkerProfileTabScreen extends StatelessWidget {
           const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
-                (route) => false,
-              );
+              AuthService.signOut();
             },
-            icon: const Icon(Icons.swap_horiz_rounded),
-            label: const Text('Switch Portal / Role'),
+            icon: const Icon(Icons.logout_rounded),
+            label: const Text('Sign Out'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               foregroundColor: AppColors.textPrimary,
@@ -76,3 +72,6 @@ class WorkerProfileTabScreen extends StatelessWidget {
     );
   }
 }
+
+
+

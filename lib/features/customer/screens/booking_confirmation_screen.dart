@@ -1,16 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
-import '../../../core/mock_data/mock_data.dart';
 import '../../../core/models/app_models.dart';
 import 'customer_booking_details_screen.dart';
 
 class BookingConfirmationScreen extends StatelessWidget {
   final CustomerBooking booking;
 
-  const BookingConfirmationScreen({
-    super.key,
-    required this.booking,
-  });
+  const BookingConfirmationScreen({super.key, required this.booking});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +26,10 @@ class BookingConfirmationScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.successBg,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.success.withValues(alpha: 0.4), width: 2),
+                border: Border.all(
+                  color: AppColors.success.withValues(alpha: 0.4),
+                  width: 2,
+                ),
               ),
               child: const Icon(
                 Icons.check_circle_rounded,
@@ -41,7 +40,7 @@ class BookingConfirmationScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            "Booking Confirmed!",
+            "Booking Request Submitted!",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 24,
@@ -61,7 +60,7 @@ class BookingConfirmationScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            "Your trade appointment is secured. The contractor has been alerted with your job site requirements.",
+            "Your request has been created and is waiting for the worker to accept it.",
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.5,
@@ -82,14 +81,37 @@ class BookingConfirmationScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Appointment Details", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                const Text(
+                  "Appointment Details",
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 12),
-                _buildSummaryRow(Icons.person_outline, "Worker", "${booking.worker.name} (${booking.worker.trade})"),
-                _buildSummaryRow(Icons.calendar_today_outlined, "Date", booking.bookingDate),
-                _buildSummaryRow(Icons.access_time_outlined, "Time Slot", booking.timeSlot),
-                _buildSummaryRow(Icons.location_on_outlined, "Location", booking.address),
+                _buildSummaryRow(
+                  Icons.person_outline,
+                  "Worker",
+                  "${booking.worker.name} (${booking.worker.trade})",
+                ),
+                _buildSummaryRow(
+                  Icons.calendar_today_outlined,
+                  "Date",
+                  booking.bookingDate,
+                ),
+                _buildSummaryRow(
+                  Icons.access_time_outlined,
+                  "Time Slot",
+                  booking.timeSlot,
+                ),
+                _buildSummaryRow(
+                  Icons.location_on_outlined,
+                  "Location",
+                  booking.address,
+                ),
                 const Divider(height: 20),
-                _buildSummaryRow(Icons.shield_outlined, "Escrow Secured", "\$${booking.totalAmount.toStringAsFixed(2)}"),
+                _buildSummaryRow(
+                  Icons.shield_outlined,
+                  "Escrow Secured",
+                  "\$${booking.totalAmount.toStringAsFixed(2)}",
+                ),
               ],
             ),
           ),
@@ -110,7 +132,11 @@ class BookingConfirmationScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     "Your funds are held securely in platform escrow. Payment is released to the worker only after work completion is verified.",
-                    style: TextStyle(fontSize: 12, color: Color(0xFF1E40AF), height: 1.3),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF1E40AF),
+                      height: 1.3,
+                    ),
                   ),
                 ),
               ],
@@ -121,12 +147,11 @@ class BookingConfirmationScreen extends StatelessWidget {
           // Navigation CTA
           ElevatedButton(
             onPressed: () {
-              // Add booking to sample in-memory mock if needed
-              MockData.sampleBookings.insert(0, booking);
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => CustomerBookingDetailsScreen(booking: booking),
+                  builder: (_) =>
+                      CustomerBookingDetailsScreen(booking: booking),
                 ),
               );
             },
@@ -134,7 +159,10 @@ class BookingConfirmationScreen extends StatelessWidget {
               backgroundColor: AppColors.customerBrand,
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
-            child: const Text("View Booking Details", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            child: const Text(
+              "View Booking Details",
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            ),
           ),
           const SizedBox(height: 12),
 
@@ -162,10 +190,23 @@ class BookingConfirmationScreen extends StatelessWidget {
           const SizedBox(width: 10),
           SizedBox(
             width: 90,
-            child: Text(label, style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: AppColors.textSecondary,
+              ),
+            ),
           ),
           Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ),
         ],
       ),

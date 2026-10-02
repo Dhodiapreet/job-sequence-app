@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 enum JobStatus {
   pendingPredecessor,
@@ -8,14 +8,10 @@ enum JobStatus {
   underReview,
   completed,
   cancelled,
-  blocked
+  blocked,
 }
 
-enum WorkerVerificationStatus {
-  verified,
-  pending,
-  rejected
-}
+enum WorkerVerificationStatus { verified, pending, rejected }
 
 class ReviewItem {
   final String authorName;
@@ -86,6 +82,16 @@ class WorkerProfile {
 }
 
 class ServiceCategory {
+  factory ServiceCategory.fromJson(Map<String, dynamic> json) {
+    return ServiceCategory(
+      id: json['id'] ?? '',
+      name: json['name'] ?? 'Unknown',
+      icon: Icons.build,
+      color: Colors.blue,
+      workerCount: json['worker_count'] ?? 0,
+    );
+  }
+
   final String id;
   final String name;
   final IconData icon;
@@ -115,6 +121,7 @@ class CustomerBooking {
   final double serviceFee;
   final double totalAmount;
   final JobStatus status;
+  final String bookingStatus;
   final String specialInstructions;
 
   const CustomerBooking({
@@ -131,6 +138,7 @@ class CustomerBooking {
     required this.serviceFee,
     required this.totalAmount,
     required this.status,
+    this.bookingStatus = 'REQUESTED',
     this.specialInstructions = "",
   });
 }
@@ -249,13 +257,29 @@ class DisputeTicket {
   });
 }
 
-enum SlotStatus {
-  available,
-  booked,
-  breakTime,
-}
+enum SlotStatus { available, booked, breakTime }
 
 class TimeSlot {
+  factory TimeSlot.fromJson(Map<String, dynamic> json) {
+    SlotStatus st = SlotStatus.available;
+    if (json['status'] == 'BOOKED') st = SlotStatus.booked;
+    if (json['status'] == 'BLOCKED') st = SlotStatus.breakTime;
+
+    // DB returns HH:MM:SS, grab HH:MM
+    String sTime = (json['start_time'] as String).substring(0, 5);
+    String eTime = (json['end_time'] as String).substring(0, 5);
+
+    return TimeSlot(
+      id: json['id'],
+      startTime: sTime,
+      endTime: eTime,
+      status: st,
+      title: st == SlotStatus.available
+          ? 'Available Slot'
+          : (st == SlotStatus.breakTime ? 'Blocked/Break' : 'Booked'),
+    );
+  }
+
   final String id;
   final String startTime;
   final String endTime;

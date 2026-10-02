@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
+
 import 'admin_dashboard_screen.dart';
 import 'admin_workers_screen.dart';
 import 'admin_customers_screen.dart';
@@ -145,7 +146,7 @@ class _AdminMainScreenState extends State<AdminMainScreen> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(Icons.swap_horiz_rounded,
+                leading: const Icon(Icons.logout_rounded,
                     color: AppColors.adminBrand),
                 title: const Text('Switch Role',
                     style: TextStyle(
@@ -206,3 +207,5 @@ class _DrawerItem {
 
   const _DrawerItem({required this.icon, required this.label});
 }
+
+

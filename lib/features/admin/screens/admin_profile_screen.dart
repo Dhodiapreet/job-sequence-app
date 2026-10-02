@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/services/auth_service.dart';
 
 class AdminProfileScreen extends StatelessWidget {
   const AdminProfileScreen({super.key});
@@ -103,7 +104,7 @@ class AdminProfileScreen extends StatelessWidget {
 
           // Logout
           OutlinedButton.icon(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => AuthService.signOut(),
             icon: const Icon(Icons.logout_rounded, color: AppColors.error),
             label: const Text('Log Out',
                 style: TextStyle(color: AppColors.error)),
@@ -150,3 +151,5 @@ class AdminProfileScreen extends StatelessWidget {
     );
   }
 }
+
+

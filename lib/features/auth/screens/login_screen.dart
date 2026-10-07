@@ -234,7 +234,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                     ),
                     const SizedBox(height: 24),
-                    if (widget.targetRole != 'ADMIN')
+                    if (widget.targetRole == 'WORKER')
+                      const Text(
+                        "Worker accounts are created and approved by an administrator.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    if (widget.targetRole == 'CUSTOMER')
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -248,7 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => SignUpScreen(
-                                    targetRole: widget.targetRole,
+                                    targetRole: 'CUSTOMER',
                                   ),
                                 ),
                               );

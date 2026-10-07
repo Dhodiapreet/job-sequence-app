@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
-import 'verify_otp_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -33,15 +32,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() {
         _isLoading = false;
         _isSuccess = true;
-      });
-      // Navigate to OTP verification screen
-      Future.delayed(const Duration(seconds: 1), () {
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => VerifyOtpScreen(email: email)),
-          );
-        }
       });
     } catch (e) {
       if (!mounted) return;
@@ -92,7 +82,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Enter your email and we will send you a reset link.',
+                      'Enter your email and we will send you a secure password reset link.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,

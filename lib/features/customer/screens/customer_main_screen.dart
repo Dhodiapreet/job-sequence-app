@@ -3,6 +3,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../core/mock_data/mock_data.dart';
 import '../../../core/models/app_models.dart';
 import '../../../core/services/worker_service.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/widgets/worker_card.dart';
 import 'customer_sequence_view.dart';
 import 'worker_search_screen.dart';
@@ -88,6 +89,14 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
   List<WorkerProfile> nearbyWorkers = [];
   List<WorkerProfile> availableToday = [];
   bool isLoading = true;
+  String _customerName = 'Customer';
+
+  String get _customerInitials {
+    final parts = _customerName.trim().split(RegExp(r'\\s+')).where((p) => p.isNotEmpty).toList();
+    if (parts.isEmpty) return 'CU';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+  }
 
   @override
   void initState() {
@@ -96,14 +105,30 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
   }
 
   Future<void> _loadData() async {
-    final cats = await WorkerService.getCategories();
-    final workers = await WorkerService.getWorkers();
-    if (mounted) {
+    try {
+      final results = await Future.wait<dynamic>([
+        WorkerService.getCategories(),
+        WorkerService.getWorkers(),
+        AuthService.getCurrentProfile(),
+      ]);
+      final cats = results[0] as List<ServiceCategory>;
+      final workers = results[1] as List<WorkerProfile>;
+      final profile = results[2] as Map<String, dynamic>?;
+      final name = (profile?['full_name'] as String?)?.trim();
+
+      if (!mounted) return;
       setState(() {
         categories = cats;
         nearbyWorkers = workers;
         availableToday = workers.where((w) => w.isAvailableToday).toList();
+        _customerName = (name != null && name.isNotEmpty) ? name : 'Customer';
         isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        _customerName = 'Customer';
       });
     }
   }
@@ -119,17 +144,36 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
       appBar: AppBar(
         title: Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 18,
               backgroundColor: AppColors.customerBrand,
-              child: Text("DS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: Text(
+                _customerInitials,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
             const SizedBox(width: 10),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Hello, David ðŸ‘‹", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text("742 Evergreen Terrace", style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
+                Text(
+                  "Hello, $_customerName 👋",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Text(
+                  "742 Evergreen Terrace",
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ],

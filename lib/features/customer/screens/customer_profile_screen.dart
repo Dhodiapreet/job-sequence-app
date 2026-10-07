@@ -2,8 +2,45 @@
 import '../../../app/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
 
-class CustomerProfileScreen extends StatelessWidget {
+class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({super.key});
+
+  @override
+  State<CustomerProfileScreen> createState() => _CustomerProfileScreenState();
+}
+
+class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
+  String _customerName = 'Customer';
+  String _customerEmail = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await AuthService.getCurrentProfile();
+    if (!mounted || profile == null) return;
+
+    final name = (profile['full_name'] as String?)?.trim();
+    final email = (profile['email'] as String?)?.trim();
+
+    setState(() {
+      _customerName = (name != null && name.isNotEmpty) ? name : 'Customer';
+      _customerEmail = email ?? '';
+    });
+  }
+
+  String get _customerInitials {
+    final parts = _customerName.trim()
+        .split(RegExp(r'\\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return 'CU';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return (parts.first.substring(0, 1) + parts.last.substring(0, 1)).toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,23 +71,34 @@ class CustomerProfileScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 38,
                   backgroundColor: AppColors.customerBrand,
                   child: Text(
-                    "DS",
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
+                    _customerInitials,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  "David Sterling",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                Text(
+                  _customerName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  "david.sterling@example.com • +1 (555) 234-8901",
-                  style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+                Text(
+                  _customerEmail,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Container(

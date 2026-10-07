@@ -38,7 +38,7 @@ class AuthService {
       return response.session != null;
     } on AuthException catch (e) {
       throw AppAuthException(_friendlySignUpError(e));
-    } on PostgrestException catch (e) {
+    } on PostgrestException {
       throw AppAuthException('Unable to create your account. Please try again.');
     } catch (e) {
       throw AppAuthException('Unable to create your account. Please try again.');
@@ -145,7 +145,7 @@ class AuthService {
     }
   }
 
-  /// Fetch the current user's profile from the database
+  /// Fetch the current user's profile and role-specific display data.
   static Future<Map<String, dynamic>?> getCurrentProfile() async {
     final user = currentUser;
     if (user == null) return null;
@@ -156,7 +156,38 @@ class AuthService {
           .select()
           .eq('id', user.id)
           .maybeSingle();
-      return data;
+
+      if (data == null) return null;
+
+      final profile = Map<String, dynamic>.from(data);
+      final role = profile['role'] as String?;
+
+      if (role == 'CUSTOMER') {
+        final customerProfile = await SupabaseService.client
+            .from('customer_profiles')
+            .select('full_name, avatar_url')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        final metadataName = user.userMetadata?['full_name'] as String?;
+        final databaseName = customerProfile?['full_name'] as String?;
+
+        profile['full_name'] = (databaseName?.trim().isNotEmpty ?? false)
+            ? databaseName!.trim()
+            : ((metadataName?.trim().isNotEmpty ?? false)
+                ? metadataName!.trim()
+                : (user.email?.split('@').first ?? 'Customer'));
+
+        profile['avatar_url'] = customerProfile?['avatar_url'];
+      } else {
+        profile['full_name'] =
+            (user.userMetadata?['full_name'] as String?)?.trim() ??
+                user.email?.split('@').first ??
+                'User';
+      }
+
+      profile['email'] = profile['email'] ?? user.email;
+      return profile;
     } catch (e) {
       throw AppAuthException('Failed to load user profile.');
     }

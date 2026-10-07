@@ -179,6 +179,24 @@ class AuthService {
                 : (user.email?.split('@').first ?? 'Customer'));
 
         profile['avatar_url'] = customerProfile?['avatar_url'];
+      } else if (role == 'WORKER') {
+        final workerProfile = await SupabaseService.client
+            .from('worker_profiles')
+            .select('full_name, trade, bio, jobs_completed')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        final metadataName = user.userMetadata?['full_name'] as String?;
+        final databaseName = workerProfile?['full_name'] as String?;
+
+        profile['full_name'] = (databaseName?.trim().isNotEmpty ?? false)
+            ? databaseName!.trim()
+            : ((metadataName?.trim().isNotEmpty ?? false)
+                ? metadataName!.trim()
+                : (user.email?.split('@').first ?? 'Worker'));
+        profile['trade'] = workerProfile?['trade'];
+        profile['bio'] = workerProfile?['bio'];
+        profile['jobs_completed'] = workerProfile?['jobs_completed'];
       } else {
         profile['full_name'] =
             (user.userMetadata?['full_name'] as String?)?.trim() ??

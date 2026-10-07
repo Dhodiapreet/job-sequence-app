@@ -16,7 +16,7 @@ class WorkerExecutionScreen extends StatefulWidget {
 
 class _WorkerExecutionScreenState extends State<WorkerExecutionScreen> {
   late List<bool> _checklistCompleted;
-  int _photosUploaded = 2;
+  int _photosUploaded = 0;
   bool _isUnderReview = false;
 
   @override
@@ -24,7 +24,7 @@ class _WorkerExecutionScreenState extends State<WorkerExecutionScreen> {
     super.initState();
     _checklistCompleted = List.generate(
       widget.step.checklist.length,
-      (index) => index < 2,
+      (index) => false,
     );
   }
 
@@ -41,7 +41,7 @@ class _WorkerExecutionScreenState extends State<WorkerExecutionScreen> {
             tooltip: "Contact Property Owner",
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Calling David Sterling (Property Owner)...")),
+                const SnackBar(content: Text("Calling customer...")),
               );
             },
           ),
@@ -108,8 +108,8 @@ class _WorkerExecutionScreenState extends State<WorkerExecutionScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  "Project: Complete Master Bathroom Remodel • 742 Evergreen Terrace",
+                Text(
+                  "Project: " + widget.step.title,
                   style: TextStyle(color: Colors.white70, fontSize: 12.5),
                 ),
                 const SizedBox(height: 14),
@@ -220,11 +220,10 @@ class _WorkerExecutionScreenState extends State<WorkerExecutionScreen> {
             children: [
               InkWell(
                 onTap: () {
-                  setState(() {
-                    _photosUploaded++;
-                  });
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Mock Worksite Photo Added!")),
+                    const SnackBar(
+                      content: Text("Photo upload is not connected yet."),
+                    ),
                   );
                 },
                 borderRadius: BorderRadius.circular(12),
@@ -300,7 +299,7 @@ class _WorkerExecutionScreenState extends State<WorkerExecutionScreen> {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    "David Sterling has received your checklist and photos. Once approved, \$1,200 will be deposited directly to your trade wallet.",
+                    "The customer has received your checklist and photos. Once approved, your eligible payout will be processed.",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 12.5, color: Color(0xFF6B21A8), height: 1.3),
                   ),
@@ -351,7 +350,7 @@ class _WorkerExecutionScreenState extends State<WorkerExecutionScreen> {
           ],
         ),
         content: const Text(
-          "Checklist items and pressure test photos sent to David Sterling. Downstream contractor (Electrical Rough-in) will be notified once signoff completes.",
+          "Checklist items and submitted evidence have been sent to the customer. The next workflow step will be notified after signoff completes.",
           style: TextStyle(fontSize: 13.5, height: 1.4),
         ),
         actions: [

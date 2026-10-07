@@ -1,417 +1,152 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
-import '../../../core/mock_data/mock_data.dart';
 import '../../../core/models/app_models.dart';
+import '../../../core/services/admin_service.dart';
 
 class AdminWorkersScreen extends StatefulWidget {
   const AdminWorkersScreen({super.key});
-
   @override
   State<AdminWorkersScreen> createState() => _AdminWorkersScreenState();
 }
 
 class _AdminWorkersScreenState extends State<AdminWorkersScreen> {
-  String _filterStatus = 'All';
+  List<WorkerProfile> _workers = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final workers = await AdminService.getWorkers();
+      if (!mounted) return;
+      setState(() {
+        _workers = workers;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final workers = MockData.sampleWorkers;
+    final verified = _workers
+        .where((w) => w.verificationStatus == WorkerVerificationStatus.verified)
+        .length;
+    final pending = _workers
+        .where((w) => w.verificationStatus == WorkerVerificationStatus.pending)
+        .length;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Worker Management',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded),
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search_rounded),
-            onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); },
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list_rounded),
-            onPressed: () => _showFilterSheet(context),
-          ),
+          IconButton(onPressed: _load, icon: const Icon(Icons.refresh_rounded)),
         ],
       ),
-      body: Column(
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _workers.isEmpty
+              ? const Center(
+                  child: Text('No workers yet.',
+                      style: TextStyle(color: AppColors.textSecondary)),
+                )
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: _summary('Workers', _workers.length)),
+                          const SizedBox(width: 10),
+                          Expanded(child: _summary('Verified', verified)),
+                          const SizedBox(width: 10),
+                          Expanded(child: _summary('Pending', pending)),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      ..._workers.map(_workerCard),
+                    ],
+                  ),
+                ),
+    );
+  }
+
+  Widget _summary(String title, int value) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
         children: [
-          // Status filter chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: ['All', 'Verified', 'Pending', 'Rejected']
-                  .map((s) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(s, style: const TextStyle(fontSize: 12)),
-                          selected: _filterStatus == s,
-                          selectedColor:
-                              AppColors.adminBrand.withValues(alpha: 0.15),
-                          onSelected: (_) =>
-                              setState(() => _filterStatus = s),
-                        ),
-                      ))
-                  .toList(),
-            ),
-          ),
-          // Summary row
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Text('${workers.length} workers',
-                    style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w500)),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Action triggered"))); },
-                  icon: const Icon(Icons.download_rounded, size: 16),
-                  label: const Text('Export', style: TextStyle(fontSize: 12)),
-                ),
-              ],
-            ),
-          ),
-          // Worker list
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: workers.length,
-              itemBuilder: (context, index) {
-                final w = workers[index];
-                return _WorkerCard(
-                  worker: w,
-                  onTap: () => _showWorkerDetail(context, w),
-                );
-              },
-            ),
-          ),
+          Text(value.toString(),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 11, color: AppColors.textSecondary)),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.adminBrand,
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Add Worker form opening...')),
-          );
-        },
-        child: const Icon(Icons.person_add_rounded, color: Colors.white),
-      ),
     );
   }
 
-  void _showFilterSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  Widget _workerCard(WorkerProfile worker) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
       ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Filter Workers',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            const Text('By Trade',
-                style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: ['Electrician', 'Plumber', 'Carpenter', 'Painter', 'AC Tech']
-                  .map((t) => FilterChip(
-                        label: Text(t, style: const TextStyle(fontSize: 12)),
-                        onSelected: (_) {},
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 16),
-            const Text('By Rating',
-                style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: ['4.5+', '4.0+', '3.5+', 'Any']
-                  .map((r) => FilterChip(
-                        label: Text(r, style: const TextStyle(fontSize: 12)),
-                        onSelected: (_) {},
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.adminBrand),
-                child: const Text('Apply Filters'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showWorkerDetail(BuildContext context, WorkerProfile w) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.75,
-        maxChildSize: 0.95,
-        minChildSize: 0.5,
-        expand: false,
-        builder: (_, scrollController) => ListView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: CircleAvatar(
-                radius: 36,
-                backgroundColor: w.avatarColor,
-                child: Text(w.avatarInitials,
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: AppColors.workerBrand,
+            child: Text(worker.avatarInitials,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(worker.name,
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Center(
-              child: Text(w.name,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold)),
-            ),
-            Center(
-              child: Text(w.trade,
-                  style: const TextStyle(
-                      fontSize: 14, color: AppColors.textSecondary)),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _detailStat('Rating', '${w.rating}'),
-                _detailStat('Jobs', '${w.jobsCompleted}'),
-                _detailStat('Experience', '${w.experienceYears}yr'),
-                _detailStat('Safety', '${w.safetyScore}%'),
-              ],
-            ),
-            const SizedBox(height: 20),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.location_on_rounded,
-                  color: AppColors.textSecondary, size: 20),
-              title: Text(w.location,
-                  style: const TextStyle(fontSize: 13)),
-              dense: true,
-            ),
-            ListTile(
-              leading: Icon(
-                w.isAvailableToday
-                    ? Icons.check_circle_rounded
-                    : Icons.cancel_rounded,
-                color: w.isAvailableToday
-                    ? AppColors.success
-                    : AppColors.error,
-                size: 20,
-              ),
-              title: Text(
-                w.isAvailableToday
-                    ? 'Available Today'
-                    : 'Not Available Today',
-                style: const TextStyle(fontSize: 13),
-              ),
-              dense: true,
-            ),
-            const SizedBox(height: 8),
-            const Text('Skills',
-                style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: w.skills
-                  .map((s) => Chip(
-                        label: Text(s, style: const TextStyle(fontSize: 11)),
-                        materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
-                        padding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Close'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('Action taken on ${w.name}')),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.adminBrand),
-                    child: const Text('Manage'),
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(worker.trade,
+                    style: const TextStyle(
+                        fontSize: 12, color: AppColors.textSecondary)),
+                const SizedBox(height: 4),
+                Text(
+                  worker.verificationStatus == WorkerVerificationStatus.verified
+                      ? 'Verified'
+                      : 'Pending verification',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: worker.verificationStatus ==
+                            WorkerVerificationStatus.verified
+                        ? AppColors.success
+                        : AppColors.warning,
                   ),
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _detailStat(String label, String value) {
-    return Column(
-      children: [
-        Text(value,
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 2),
-        Text(label,
-            style: const TextStyle(
-                fontSize: 11, color: AppColors.textSecondary)),
-      ],
-    );
-  }
-}
-
-class _WorkerCard extends StatelessWidget {
-  final WorkerProfile worker;
-  final VoidCallback onTap;
-
-  const _WorkerCard({required this.worker, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: worker.avatarColor,
-              child: Text(worker.avatarInitials,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(worker.name,
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600)),
-                      if (worker.verificationStatus ==
-                          WorkerVerificationStatus.verified) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.verified,
-                            size: 14, color: AppColors.customerBrand),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(worker.trade,
-                      style: const TextStyle(
-                          fontSize: 12, color: AppColors.textSecondary)),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.star_rounded,
-                          size: 14, color: Colors.amber),
-                      const SizedBox(width: 2),
-                      Text('${worker.rating}',
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600)),
-                      const SizedBox(width: 10),
-                      Icon(
-                        worker.isAvailableToday
-                            ? Icons.circle
-                            : Icons.circle_outlined,
-                        size: 8,
-                        color: worker.isAvailableToday
-                            ? AppColors.success
-                            : AppColors.textTertiary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        worker.isAvailableToday
-                            ? 'Available'
-                            : 'Unavailable',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: worker.isAvailableToday
-                              ? AppColors.success
-                              : AppColors.textTertiary,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text('${worker.jobsCompleted} jobs',
-                          style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textTertiary)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded,
-                color: AppColors.textTertiary),
-          ],
-        ),
+          ),
+          Text('₹' + worker.hourlyRate.toStringAsFixed(0) + '/hr',
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
       ),
     );
   }

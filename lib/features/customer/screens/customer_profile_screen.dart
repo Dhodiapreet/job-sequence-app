@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/customer_service.dart';
+import '../../../core/models/app_models.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({super.key});
@@ -12,6 +14,7 @@ class CustomerProfileScreen extends StatefulWidget {
 class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   String _customerName = 'Customer';
   String _customerEmail = '';
+  List<CustomerBooking> _bookings = [];
 
   @override
   void initState() {
@@ -20,16 +23,27 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final profile = await AuthService.getCurrentProfile();
-    if (!mounted || profile == null) return;
+    try {
+      final results = await Future.wait<dynamic>([
+        AuthService.getCurrentProfile(),
+        CustomerService.getBookings(),
+      ]);
+      final profile = results[0] as Map<String, dynamic>?;
+      final bookings = results[1] as List<CustomerBooking>;
+      if (!mounted) return;
 
-    final name = (profile['full_name'] as String?)?.trim();
-    final email = (profile['email'] as String?)?.trim();
+      final name = (profile?['full_name'] as String?)?.trim();
+      final email = (profile?['email'] as String?)?.trim();
 
-    setState(() {
-      _customerName = (name != null && name.isNotEmpty) ? name : 'Customer';
-      _customerEmail = email ?? '';
-    });
+      setState(() {
+        _customerName = (name != null && name.isNotEmpty) ? name : 'Customer';
+        _customerEmail = email ?? '';
+        _bookings = bookings;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _bookings = []);
+    }
   }
 
   String get _customerInitials {
@@ -112,7 +126,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     children: [
                       Icon(Icons.verified_rounded, size: 14, color: AppColors.success),
                       SizedBox(width: 4),
-                      Text("Verified Property Owner", style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.success)),
+                      Text("Customer Account", style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: AppColors.success)),
                     ],
                   ),
                 ),
@@ -125,15 +139,37 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           Row(
             children: [
               Expanded(
-                child: _buildStatTile("Active Projects", "3", Icons.account_tree_rounded, AppColors.customerBrand),
+                child: _buildStatTile(
+                  "Active Projects",
+                  _bookings
+                      .where((b) => b.bookingStatus == 'REQUESTED' || b.bookingStatus == 'ACCEPTED')
+                      .length
+                      .toString(),
+                  Icons.account_tree_rounded,
+                  AppColors.customerBrand,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatTile("Jobs Booked", "12", Icons.handyman_rounded, AppColors.workerBrand),
+                child: _buildStatTile(
+                  "Jobs Booked",
+                  _bookings.length.toString(),
+                  Icons.handyman_rounded,
+                  AppColors.workerBrand,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatTile("Escrow Released", "\$8.4K", Icons.payments_rounded, AppColors.primary),
+                child: _buildStatTile(
+                  "Completed Spend",
+                  "\$" +
+                      _bookings
+                          .where((b) => b.bookingStatus == 'COMPLETED')
+                          .fold<double>(0, (sum, b) => sum + b.totalAmount)
+                          .toStringAsFixed(0),
+                  Icons.payments_rounded,
+                  AppColors.primary,
+                ),
               ),
             ],
           ),
@@ -146,13 +182,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
           _buildMenuTile(
             icon: Icons.location_on_outlined,
             title: "Saved Job Site Locations",
-            subtitle: "742 Evergreen Terrace + 1 more",
+            subtitle: "No saved job site locations yet",
             onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Section opened"))); },
           ),
           _buildMenuTile(
             icon: Icons.credit_card_rounded,
             title: "Payment Methods & Escrow Card",
-            subtitle: "Mastercard ending in 4242",
+            subtitle: "No payment methods added",
             onTap: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Section opened"))); },
           ),
           _buildMenuTile(

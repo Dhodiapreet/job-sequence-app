@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
-import '../../../core/mock_data/mock_data.dart';
 import '../../../core/services/worker_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/models/app_models.dart';
-import 'worker_execution_screen.dart';
 
 class WorkerScheduleScreen extends StatefulWidget {
   const WorkerScheduleScreen({super.key});
@@ -142,16 +140,9 @@ class _WorkerScheduleScreenState extends State<WorkerScheduleScreen> {
                   ),
                 ),
                 if (!isBreak && !isAvailable)
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right_rounded),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => WorkerExecutionScreen(step: MockData.sampleJobSteps[1]),
-                        ),
-                      );
-                    },
+                  const Icon(
+                    Icons.event_busy_rounded,
+                    color: AppColors.workerBrand,
                   )
               ],
             ),

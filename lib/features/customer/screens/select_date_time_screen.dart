@@ -20,18 +20,12 @@ class _SelectDateTimeScreenState extends State<SelectDateTimeScreen> {
   String? _selectedSlotId;
   bool _isCreatingBooking = false;
   double _estimatedHours = 4.0;
-  final TextEditingController _jobTitleController = TextEditingController(
-    text: "Water Purifier Installation",
-  );
-  final TextEditingController _jobDescriptionController = TextEditingController(
-    text: "Install and configure the water purifier.",
-  );
-  final TextEditingController _addressController = TextEditingController(
-    text: "742 Evergreen Terrace, Metro West District",
-  );
-  final TextEditingController _instructionsController = TextEditingController(
-    text: "Water meter and main shutoff are in the basement. Call on arrival.",
-  );
+  final TextEditingController _jobTitleController = TextEditingController();
+  final TextEditingController _jobDescriptionController =
+      TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _instructionsController =
+      TextEditingController();
 
   final List<DateTime> _actualDates = [];
   List<TimeSlot> _slots = [];
@@ -405,7 +399,7 @@ class _SelectDateTimeScreenState extends State<SelectDateTimeScreen> {
             controller: _jobTitleController,
             decoration: const InputDecoration(
               labelText: "Job Title",
-              hintText: "e.g. Water Purifier Installation",
+              hintText: "Enter a title for this job",
             ),
           ),
           const SizedBox(height: 12),

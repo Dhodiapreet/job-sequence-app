@@ -1,11 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
-import '../../../core/mock_data/mock_data.dart';
 import '../../../core/models/app_models.dart';
 import '../../../core/services/worker_service.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/customer_service.dart';
 import '../../../core/widgets/worker_card.dart';
-import 'customer_sequence_view.dart';
 import 'worker_search_screen.dart';
 import 'worker_list_screen.dart';
 import 'worker_profile_screen.dart';
@@ -90,6 +89,7 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
   List<WorkerProfile> availableToday = [];
   bool isLoading = true;
   String _customerName = 'Customer';
+  CustomerBooking? _upcomingBooking;
 
   String get _customerInitials {
     final parts = _customerName.trim().split(RegExp(r'\\s+')).where((p) => p.isNotEmpty).toList();
@@ -110,11 +110,16 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
         WorkerService.getCategories(),
         WorkerService.getWorkers(),
         AuthService.getCurrentProfile(),
+        CustomerService.getBookings(),
       ]);
       final cats = results[0] as List<ServiceCategory>;
       final workers = results[1] as List<WorkerProfile>;
       final profile = results[2] as Map<String, dynamic>?;
+      final bookings = results[3] as List<CustomerBooking>;
       final name = (profile?['full_name'] as String?)?.trim();
+      final liveUpcoming = bookings.where((booking) =>
+          booking.bookingStatus == 'REQUESTED' ||
+          booking.bookingStatus == 'ACCEPTED').toList();
 
       if (!mounted) return;
       setState(() {
@@ -122,6 +127,7 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
         nearbyWorkers = workers;
         availableToday = workers.where((w) => w.isAvailableToday).toList();
         _customerName = (name != null && name.isNotEmpty) ? name : 'Customer';
+        _upcomingBooking = liveUpcoming.isEmpty ? null : liveUpcoming.first;
         isLoading = false;
       });
     } catch (_) {
@@ -138,7 +144,6 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    final upcomingBooking = MockData.sampleBookings.firstWhere((b) => b.status == JobStatus.booked);
 
     return Scaffold(
       appBar: AppBar(
@@ -168,7 +173,7 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
                   ),
                 ),
                 const Text(
-                  "742 Evergreen Terrace",
+                  "Find a trusted professional for your next job",
                   style: TextStyle(
                     fontSize: 11.5,
                     color: AppColors.textSecondary,
@@ -264,6 +269,7 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
           ),
           const SizedBox(height: 18),
 
+          if (_upcomingBooking != null) ...[
           // 2. Upcoming Booking Card
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -306,12 +312,12 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
                         ),
                       ),
                       const Spacer(),
-                      const Text("Tomorrow", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                      Text(_upcomingBooking!.bookingDate, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    upcomingBooking.serviceTitle,
+                    _upcomingBooking!.serviceTitle,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 17,
@@ -325,13 +331,13 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
                         radius: 10,
                         backgroundColor: Colors.white,
                         child: Text(
-                          upcomingBooking.worker.avatarInitials,
+                          _upcomingBooking!.worker.avatarInitials,
                           style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: AppColors.primary),
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        "${upcomingBooking.worker.name} â€¢ ${upcomingBooking.timeSlot}",
+                        "${_upcomingBooking!.worker.name} â€¢ ${_upcomingBooking!.timeSlot}",
                         style: const TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
@@ -345,7 +351,7 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => CustomerBookingDetailsScreen(booking: upcomingBooking),
+                                builder: (_) => CustomerBookingDetailsScreen(booking: _upcomingBooking!),
                               ),
                             );
                           },
@@ -364,7 +370,7 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => CustomerSequenceView(project: MockData.sampleProjects[0]),
+                                builder: (_) => const CustomerBookingsScreen(),
                               ),
                             );
                           },
@@ -383,6 +389,7 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
             ),
           ),
           const SizedBox(height: 24),
+          ],
 
           // 3. Quick Actions
           Padding(
@@ -392,13 +399,13 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
                 Expanded(
                   child: _buildQuickActionCard(
                     icon: Icons.timeline_rounded,
-                    title: "Sequence Builder",
+                    title: "Booking Timeline",
                     color: AppColors.customerBrand,
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => CustomerSequenceView(project: MockData.sampleProjects[0]),
+                          builder: (_) => const CustomerBookingsScreen(),
                         ),
                       );
                     },
@@ -659,8 +666,41 @@ class _CustomerHomeDashboardTabState extends State<_CustomerHomeDashboardTab> {
 }
 
 // ---------------- TAB 4: ESCROW WALLET ----------------
-class _CustomerEscrowWalletTab extends StatelessWidget {
+class _CustomerEscrowWalletTab extends StatefulWidget {
   const _CustomerEscrowWalletTab();
+
+  @override
+  State<_CustomerEscrowWalletTab> createState() =>
+      _CustomerEscrowWalletTabState();
+}
+
+class _CustomerEscrowWalletTabState extends State<_CustomerEscrowWalletTab> {
+  List<CustomerBooking> _bookings = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final bookings = await CustomerService.getBookings();
+      if (!mounted) return;
+      setState(() {
+        _bookings = bookings;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+    }
+  }
+
+  double get _heldTotal => _bookings
+      .where((b) => b.bookingStatus == 'REQUESTED' || b.bookingStatus == 'ACCEPTED')
+      .fold(0.0, (sum, b) => sum + b.totalAmount);
 
   @override
   Widget build(BuildContext context) {
@@ -681,13 +721,13 @@ class _CustomerEscrowWalletTab extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("Funds Held in Protected Escrow", style: TextStyle(color: Colors.white70, fontSize: 12)),
                 SizedBox(height: 6),
                 Text(
-                  "\$1,850.00",
+                  '\$' + _heldTotal.toStringAsFixed(2),
                   style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 14),
@@ -706,10 +746,35 @@ class _CustomerEscrowWalletTab extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          _buildMilestoneRow("Site Demolition", "Marcus Vance", "\$650.00", "Released to Worker", AppColors.success, AppColors.successBg),
-          _buildMilestoneRow("Rough Plumbing", "Rohan Patel", "\$1,200.00", "Locked in Escrow (Active Job)", AppColors.info, AppColors.infoBg),
-          _buildMilestoneRow("Electrical Rough-in", "Pending Booking", "\$950.00", "Awaiting Worker Booking", AppColors.accentDark, AppColors.accentLight),
-          _buildMilestoneRow("Drywall & Taping", "Sequence Step 4", "\$800.00", "Locked (Upstream Dependency)", AppColors.textTertiary, const Color(0xFFF1F5F9)),
+          if (_loading)
+            const Center(child: CircularProgressIndicator())
+          else if (_bookings.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  "No escrow activity yet.",
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
+            )
+          else
+            ..._bookings.map(
+              (booking) => _buildMilestoneRow(
+                booking.serviceTitle,
+                booking.worker.name,
+                "\$" + booking.totalAmount.toStringAsFixed(2),
+                booking.bookingStatus == 'ACCEPTED'
+                    ? 'Locked in Escrow'
+                    : 'Pending Worker',
+                booking.bookingStatus == 'ACCEPTED'
+                    ? AppColors.info
+                    : AppColors.warning,
+                booking.bookingStatus == 'ACCEPTED'
+                    ? AppColors.infoBg
+                    : AppColors.warningBg,
+              ),
+            ),
         ],
       ),
     );

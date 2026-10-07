@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../app/theme/app_theme.dart';
 import 'supabase_service.dart';
 import '../models/app_models.dart';
 
@@ -53,7 +54,11 @@ class WorkerService {
 
   // --- WORKER DISCOVERY ---
 
-  static Future<List<WorkerProfile>> getWorkers({String? categoryId, String? searchQuery}) async {
+  static Future<List<WorkerProfile>> getWorkers({
+    String? categoryId,
+    String? searchQuery,
+    bool approvedOnly = true,
+  }) async {
     try {
       // Query worker_profiles, left join with worker_skills
       // Note: Supabase relational queries use nested syntax:
@@ -72,14 +77,73 @@ class WorkerService {
       }
 
       final response = await query;
-      return (response as List).map((e) => _mapWorker(e)).toList();
+      final rows = List<Map<String, dynamic>>.from(
+        (response as List).map((row) => Map<String, dynamic>.from(row)),
+      );
+
+      if (rows.isEmpty) return [];
+
+      final workerIds = rows
+          .map((row) => row['user_id']?.toString())
+          .whereType<String>()
+          .toList();
+
+      final today = DateTime.now();
+      final dateValue =
+          "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
+
+      final availabilityRows = await _client
+          .from('worker_availability')
+          .select('worker_id')
+          .inFilter('worker_id', workerIds)
+          .eq('slot_date', dateValue)
+          .eq('status', 'AVAILABLE');
+
+      final availableWorkerIds = (availabilityRows as List)
+          .map((row) => row['worker_id']?.toString())
+          .whereType<String>()
+          .toSet();
+
+      final verificationRows = await _client
+          .from('worker_verifications')
+          .select('worker_id, status, created_at')
+          .inFilter('worker_id', workerIds)
+          .eq('status', 'APPROVED')
+          .order('created_at', ascending: false);
+
+      final verifiedWorkerIds = (verificationRows as List)
+          .map((row) => row['worker_id']?.toString())
+          .whereType<String>()
+          .toSet();
+
+      final visibleRows = approvedOnly
+          ? rows.where(
+              (row) => verifiedWorkerIds.contains(
+                row['user_id']?.toString(),
+              ),
+            )
+          : rows;
+
+      return visibleRows
+          .map((row) => _mapWorker(
+                row,
+                isAvailableToday:
+                    availableWorkerIds.contains(row['user_id']?.toString()),
+                isVerified:
+                    verifiedWorkerIds.contains(row['user_id']?.toString()),
+              ))
+          .toList();
     } catch (e) {
       debugPrint("Error fetching workers: $e");
       return [];
     }
   }
 
-  static WorkerProfile _mapWorker(Map<String, dynamic> json) {
+  static WorkerProfile _mapWorker(
+    Map<String, dynamic> json, {
+    bool isAvailableToday = false,
+    bool isVerified = false,
+  }) {
     final skills = (json['worker_skills'] as List?)?.map((s) => s['skill_name'].toString()).toList() ?? [];
     
     return WorkerProfile(
@@ -87,22 +151,24 @@ class WorkerService {
       name: json['full_name'] as String? ?? 'Unknown',
       trade: json['trade'] as String? ?? 'Professional',
       categoryId: json['category_id'] as String? ?? '',
-      rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
       jobsCompleted: (json['jobs_completed'] as num?)?.toInt() ?? 0,
-      experienceYears: 5, // Not in current schema, default to 5
-      hourlyRate: (json['hourly_rate'] as num?)?.toDouble() ?? 50.0,
-      dailyRate: (json['daily_rate'] as num?)?.toDouble() ?? 400.0,
-      location: "Service Area", // Placeholder
-      distanceKm: 2.5, // Placeholder for actual geo-query
-      isAvailableToday: true, // Requires checking worker_availability table
-      verificationStatus: WorkerVerificationStatus.verified, // Assuming verified for now
+      experienceYears: 0, // Not stored in the current schema.
+      hourlyRate: (json['hourly_rate'] as num?)?.toDouble() ?? 0.0,
+      dailyRate: (json['daily_rate'] as num?)?.toDouble() ?? 0.0,
+      location: "Not specified",
+      distanceKm: 0.0,
+      isAvailableToday: isAvailableToday,
+      verificationStatus: isVerified
+          ? WorkerVerificationStatus.verified
+          : WorkerVerificationStatus.pending,
       skills: skills,
       badges: [],
-      bio: json['bio'] as String? ?? 'Experienced professional ready for your next project.',
+      bio: json['bio'] as String? ?? '',
       avatarInitials: _getInitials(json['full_name'] as String? ?? 'W'),
       avatarColor: Colors.blueAccent,
-      safetyScore: 100,
+      safetyScore: 0,
       portfolioTags: [],
       reviews: [], // Would fetch from reviews table
     );
@@ -228,6 +294,72 @@ class WorkerService {
       debugPrint('Error fetching worker booking requests: $e');
       rethrow;
     }
+  }
+
+  static Future<List<NotificationItem>> getWorkerNotifications() async {
+    final workerId = _client.auth.currentUser?.id;
+    if (workerId == null) throw Exception('Worker session is not available.');
+
+    final rows = await _client
+        .from('notifications')
+        .select('id, title, message, type, is_read, created_at')
+        .eq('user_id', workerId)
+        .order('created_at', ascending: false);
+
+    return (rows as List).map((row) {
+      final type = (row['type']?.toString() ?? '').toLowerCase();
+      final icon = type.contains('booking')
+          ? Icons.calendar_today_rounded
+          : type.contains('payment')
+              ? Icons.payments_rounded
+              : Icons.notifications_outlined;
+      return NotificationItem(
+        id: row['id'].toString(),
+        title: row['title']?.toString() ?? 'Notification',
+        message: row['message']?.toString() ?? '',
+        timeAgo: _timeAgo(row['created_at']?.toString()),
+        icon: icon,
+        color: AppColors.workerBrand,
+        isRead: row['is_read'] == true,
+      );
+    }).toList();
+  }
+
+  static Future<void> markAllWorkerNotificationsRead() async {
+    final workerId = _client.auth.currentUser?.id;
+    if (workerId == null) return;
+    await _client
+        .from('notifications')
+        .update({'is_read': true})
+        .eq('user_id', workerId)
+        .eq('is_read', false);
+  }
+
+  static String _timeAgo(String? value) {
+    if (value == null) return '';
+    final date = DateTime.tryParse(value);
+    if (date == null) return '';
+    final diff = DateTime.now().toUtc().difference(date.toUtc());
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inHours < 1) return diff.inMinutes.toString() + 'm ago';
+    if (diff.inDays < 1) return diff.inHours.toString() + 'h ago';
+    if (diff.inDays < 7) return diff.inDays.toString() + 'd ago';
+    return date.day.toString() + '/' + date.month.toString() + '/' + date.year.toString();
+  }
+
+  static Future<List<Map<String, dynamic>>> getWorkerBookings() async {
+    final workerId = _client.auth.currentUser?.id;
+    if (workerId == null) throw Exception('Worker session is not available.');
+
+    final rows = await _client
+        .from('bookings')
+        .select('id, status, total_amount, labor_cost, service_fee, created_at')
+        .eq('worker_id', workerId)
+        .order('created_at', ascending: false);
+
+    return List<Map<String, dynamic>>.from(
+      (rows as List).map((row) => Map<String, dynamic>.from(row)),
+    );
   }
 
   static Future<void> updateBookingStatus({

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/services/auth_service.dart';
-import 'login_screen.dart';
+import '../../role_selection/welcome_screen.dart';
 
 class UpdatePasswordScreen extends StatefulWidget {
   const UpdatePasswordScreen({super.key});
@@ -61,7 +61,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => const LoginScreen(targetRole: 'CUSTOMER'),
+          builder: (_) => const WelcomeScreen(),
         ),
         (route) => false,
       );

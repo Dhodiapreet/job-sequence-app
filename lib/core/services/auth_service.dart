@@ -37,14 +37,11 @@ class AuthService {
       );
       return response.session != null;
     } on AuthException catch (e) {
-      print('SUPABASE AUTH ERROR: ${e.message}');
-      throw AppAuthException(e.message);
+      throw AppAuthException(_friendlySignUpError(e));
     } on PostgrestException catch (e) {
-      print('SUPABASE DB ERROR: ${e.message}');
-      throw AppAuthException(e.message);
+      throw AppAuthException('Unable to create your account. Please try again.');
     } catch (e) {
-      print('UNKNOWN ERROR: $e');
-      throw AppAuthException('An unexpected error occurred during sign up.');
+      throw AppAuthException('Unable to create your account. Please try again.');
     }
   }
 
@@ -56,12 +53,32 @@ class AuthService {
     try {
       await _auth.signInWithPassword(email: email, password: password);
     } on AuthException catch (e) {
-      print('SUPABASE AUTH ERROR: ${e.message}');
-      throw AppAuthException(e.message);
+      throw AppAuthException(_friendlySignInError(e));
     } catch (e) {
-      print('UNKNOWN ERROR: $e');
       throw AppAuthException('Invalid email or password.');
     }
+  }
+
+  static String _friendlySignUpError(AuthException e) {
+    final message = e.message.toLowerCase();
+    if (message.contains('rate limit') || message.contains('too many')) {
+      return 'Too many account creation attempts. Please wait and try again.';
+    }
+    if (message.contains('already registered') || message.contains('already exists')) {
+      return 'An account with this email already exists.';
+    }
+    return 'Unable to create your account. Please try again.';
+  }
+
+  static String _friendlySignInError(AuthException e) {
+    final message = e.message.toLowerCase();
+    if (message.contains('email not confirmed')) {
+      return 'Please verify your email before signing in.';
+    }
+    if (message.contains('rate limit') || message.contains('too many')) {
+      return 'Too many sign-in attempts. Please wait and try again.';
+    }
+    return 'Invalid email or password.';
   }
 
   /// Request a password reset email.
@@ -124,7 +141,6 @@ class AuthService {
     try {
       await _auth.signOut();
     } catch (e) {
-      print('UNKNOWN ERROR: $e');
       throw AppAuthException('Failed to sign out. Please try again.');
     }
   }
@@ -142,7 +158,6 @@ class AuthService {
           .maybeSingle();
       return data;
     } catch (e) {
-      print('UNKNOWN ERROR: $e');
       throw AppAuthException('Failed to load user profile.');
     }
   }

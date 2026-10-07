@@ -24,6 +24,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscureConfirmPassword = true;
 
   Future<void> _handleSignUp() async {
+    if (widget.targetRole != 'CUSTOMER') {
+      setState(() {
+        _errorMessage = 'Worker accounts are created and approved by an administrator.';
+      });
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -34,7 +40,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     try {
       final signedIn = await AuthService.signUp(
         email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+        password: _passwordController.text,
         fullName: _nameController.text.trim(),
       );
       if (!mounted) return;
@@ -109,8 +115,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      widget.targetRole == 'WORKER' 
-                          ? "Sign up to start applying for jobs."
+                      widget.targetRole == 'WORKER'
+                          ? "Worker accounts are created and approved by an administrator."
                           : "Sign up to start booking professionals.",
                       textAlign: TextAlign.center,
                       style: const TextStyle(
@@ -143,6 +149,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     TextFormField(
                       controller: _nameController,
+                      enabled: widget.targetRole == 'CUSTOMER',
                       keyboardType: TextInputType.name,
                       decoration: InputDecoration(
                         labelText: "Full Name",
@@ -159,6 +166,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
+                      enabled: widget.targetRole == 'CUSTOMER',
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: "Email Address",
@@ -176,6 +184,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
+                      enabled: widget.targetRole == 'CUSTOMER',
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: "Password",
@@ -197,6 +206,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _confirmPasswordController,
+                      enabled: widget.targetRole == 'CUSTOMER',
                       obscureText: _obscureConfirmPassword,
                       decoration: InputDecoration(
                         labelText: "Confirm Password",
@@ -224,7 +234,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
-                      onPressed: _isLoading ? null : _handleSignUp,
+                      onPressed: _isLoading || widget.targetRole != 'CUSTOMER' ? null : _handleSignUp,
                       child: _isLoading
                           ? const SizedBox(
                               width: 20,
